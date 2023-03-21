@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <title>Neuri | Voice Commands Demo</title>
+  <link href="https://uploads-ssl.webflow.com/625dacef6ea6ea5fcd38826f/63288dd8b1e6481735beb9b2_favicon.ico" rel="shortcut icon" type="image/x-icon">
+  <link href="https://uploads-ssl.webflow.com/625dacef6ea6ea5fcd38826f/63288e2a71b0f215dc2b3d9e_logo512_256x256.png" rel="apple-touch-icon">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body,
+    #root,
+    canvas.webgl {
+      max-height: 100vh;
+      overflow: hidden;
+    }
+
+    canvas.webgl {
+      width: 100%;
+    }
+
+    .load {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      margin: auto;
+    }
+
+    .load hr {
+      border: 0;
+      margin: 0;
+      width: 40%;
+      height: 40%;
+      position: absolute;
+      border-radius: 50%;
+      animation: spin 2s ease infinite;
+    }
+
+    .load :first-child {
+      background: #6c18ab;
+      animation-delay: -1.5s;
+    }
+
+    .load :nth-child(2) {
+      background: #75d8ef;
+      animation-delay: -1s;
+    }
+
+    .load :nth-child(3) {
+      background: #009ee2;
+      animation-delay: -0.5s;
+    }
+
+    .load :last-child {
+      background: #2f3c86;
+    }
+
+    @keyframes spin {
+
+      0%,
+      100% {
+        transform: translate(0);
+      }
+
+      25% {
+        transform: translate(160%);
+      }
+
+      50% {
+        transform: translate(160%, 160%);
+      }
+
+      75% {
+        transform: translate(0, 160%);
+      }
+    }
+
+    .bottom-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: gray;
+      font-family: sans-serif;
+      text-align: center;
+    }
+
+    .preloader {
+      display: flex;
+      flex-direction: column;
+      gap: 50px;
+    }
+
+    .cover {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .extra {
+      padding-left: 1.3em;
+    }
+
+    .mic__container {
+      position: absolute;
+      top: 80%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/gh/Neuri-ai/web-components@1.0.0-beta-4/dist/web-components.bundle.min.js"
+    integrity="sha256-+EcJalmLAiTYucnXrih8VhZAzGr2KE0dMfXc91KcY28=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <div id="root">
+    <div class="cover">
+      <div class="preloader">
+        <div class="load">
+          <hr />
+          <hr />
+          <hr />
+          <hr />
+        </div>
+        <div class="extra">
+          <h1 class="bottom-text">Demo is loading...</h1>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene -->
+    <div class="canvas-container">
+      <canvas class="webgl"></canvas>
+    </div>
+    <modal-popup></modal-popup>
+    <div class="mic__container">
+      <drawer-component delay="3000"></drawer-component>
+      <mic-button apikey="wfdSpu1yRgz5IERHMF3RXd-_HfeXFrwZAg" lang="en" service="textcat-ner" temperature="0.8"></mic-button>
+    </div>
+    
+</body>
+
+</html>
