@@ -21,10 +21,12 @@ import * as dat from 'dat.gui'
 
 import video from '@/models/duck.mp4'
 import radio from '@/models/radio_music.mp3'
-import { bloomValues }  from '@/postprocesing/useBloom'
+import { bloomValues } from '@/postprocesing/useBloom'
 
 let gui
 let lights = []
+let doorOpen = false
+let blindOpen = false
 
 const rightSide = ['Foco', 'Foco001', 'Foco005']
 const leftSide = ['Foco002', 'Foco003', 'Foco004']
@@ -33,7 +35,6 @@ const setupModel = (data, scene) => {
   if (isDevMode()) {
     gui = new dat.GUI()
   }
-
 
   const model = data.scene
   const anims = data.animations
@@ -60,10 +61,10 @@ const setupModel = (data, scene) => {
 
       if (child.name === 'Foco' || child.name === 'Foco001' || child.name === 'Foco005')
         child.position.x = 9.06
-        child.intensity = 2.5
+      child.intensity = 2.5
       if (child.name === 'Foco002' || child.name === 'Foco003' || child.name === 'Foco004')
         child.position.x = -9.06
-        child.intensity = 2.5
+      child.intensity = 2.5
 
       if (child.name === 'Área002') {
         child.intensity = 1.11
@@ -77,7 +78,7 @@ const setupModel = (data, scene) => {
     }
   })
 
-  const ambientLight = new DirectionalLight("#fff", 0.08)
+  const ambientLight = new DirectionalLight('#fff', 0.08)
   ambientLight.color = new Color(255, 255, 255)
   scene.add(ambientLight)
 
@@ -120,171 +121,186 @@ const setupModel = (data, scene) => {
   tvDisplay.position.x = -8
   tvDisplay.rotation.y = Math.PI * 0.5
 
-  window.addEventListener('onSpeech', (e) => {
-    // reduce volume to 10% when listening
+  window.addEventListener('onInit', (e) => {
     videoElement.volume = 0.1
     audioElement.volume = 0.1
+  })
+
+  window.addEventListener('onResult', (e) => {
+    // reduce volume to 10% when listening
+
     let message = e.detail
 
     console.log(message)
 
-    if (message.isFinal) {
-      if (message.intent.intent === 'turn_off') {
-        // if not "side" on entities [{name: side}] then turn off all lights
-        let side = message.entities.find((entity) => entity.name === 'side')
-        let light = message.entities.find(
-          (entity) =>
-            (entity.name === 'object' && entity.value === 'lights') || entity.value === 'light'
-        )
-        let tv_display = message.entities.find(
-          (entity) => entity.name === 'object' && entity.value === 'tv'
-        )
-        let radio_player = message.entities.find( (entity) => entity.name === 'object' && entity.value === 'radio')
+    if (message.actions.action === 'on') {
+      let side = message.entities.find((entity) => entity.name === 'direction')
+      let tv_display = message.entities.find(
+        (entity) => entity.name === 'object' && entity.value === 'TV'
+      )
+      let light = message.entities.find(
+        (entity) =>
+          (entity.name === 'object' && entity.value === 'lights') || entity.value === 'light'
+      )
+      let radio_player = message.entities.find(
+        (entity) => entity.name === 'object' && entity.value === 'radio'
+      )
 
-        if (light) {
-          lights.forEach((light) => {
-            light.intensity = 0
-          })
-          ambientLight.intensity = 0
-        }
-
-        if (side && side.value === 'right') {
-          rightSide.forEach((light) => {
-            lights.find((l) => l.name === light).intensity = 0
-          })
-        }
-
-        if (side && side.value === 'left') {
-          leftSide.forEach((light) => {
-            lights.find((l) => l.name === light).intensity = 0
-          })
-        }
-
-        if (tv_display) {
-          tvDisplay.material = new MeshStandardMaterial({
-            color: tv.material.color,
-            emissive: tv.material.emissive,
-            emissiveIntensity: tv.material.emissiveIntensity,
-            roughness: tv.material.roughness,
-            metalness: tv.material.metalness,
-          })
-          videoElement.pause()
-        }
-
-        if (radio_player) {
-          audioElement.pause()
-        }
-      }
-
-      if (message.intent.intent === 'turn_on') {
-        // if not "side" on entities [{name: side}] then turn on all lights
-        let side = message.entities.find((entity) => entity.name === 'side')
-        let tv_display = message.entities.find(
-          (entity) => entity.name === 'object' && entity.value === 'tv'
-        )
-        let light = message.entities.find(
-          (entity) =>
-            (entity.name === 'object' && entity.value === 'lights') || entity.value === 'light'
-        )
-        let radio_player = message.entities.find( (entity) => entity.name === 'object' && entity.value === 'radio')
-        if (light) {
-          lights.forEach((light) => {
-            light.intensity = 2.5
-
-            if (light.name === 'Área002') {
-              light.intensity = 1.11
-            }
-          })
-          ambientLight.intensity = 0.08
-        }
-
+      if (light) {
         if (side && side.value === 'right') {
           rightSide.forEach((light) => {
             lights.find((l) => l.name === light).intensity = 120
           })
+          return
         }
 
         if (side && side.value === 'left') {
           leftSide.forEach((light) => {
             lights.find((l) => l.name === light).intensity = 120
           })
+          return
         }
 
-        if (tv_display) {
-          tvDisplay.material = new MeshBasicMaterial({
-            map: videoTexture,
-          })
-          videoElement.play()
-        }
+        lights.forEach((light) => {
+          light.intensity = 2.5
 
-        if (radio_player) {
-          audioElement.play()
-        }
+          if (light.name === 'Área002') {
+            light.intensity = 1.11
+          }
+        })
+        ambientLight.intensity = 0.08
       }
 
-      if (message.intent.intent === 'open') {
-        // if not "door" on entities [{name: object, value: "door"}] then open the door
-        let door = message.entities.find(
-          (entity) => entity.name === 'object' && entity.value === 'door'
-        )
-        let blind = message.entities.find(
-          (entity) => entity.name === 'object' && entity.value === 'blind'
-        )
-        let object = []
-
-        if (door) {
-          object = [animations.open_door]
-        }
-
-        if (blind) {
-          object = [animations.open_blind_1, animations.open_blind_2]
-        }
-
-        if (object) {
-          object.map((clip) => {
-            const player = mixer.clipAction(clip)
-            player.clampWhenFinished = true
-            player.loop = LoopOnce
-            player.play()
-          })
-        }
+      if (tv_display) {
+        tvDisplay.material = new MeshBasicMaterial({
+          map: videoTexture,
+        })
+        videoElement.play()
       }
 
-      if (message.intent.intent === 'close') {
-        // if not "door" on entities [{name: object, value: "door"}] then close the door
-        let door = message.entities.find(
-          (entity) => entity.name === 'object' && entity.value === 'door'
-        )
-        let blind = message.entities.find(
-          (entity) => entity.name === 'object' && entity.value === 'blind'
-        )
-        let object = []
-
-        if (door) {
-          mixer.stopAllAction()
-          object = [animations.close_door]
-        }
-
-        if (blind) {
-          mixer.stopAllAction()
-          object = [animations.close_blind_1, animations.close_blind_2]
-        }
-
-        if (object) {
-          object.map((clip) => {
-            const player = mixer.clipAction(clip)
-            player.clampWhenFinished = true
-            player.loop = LoopOnce
-            player.play()
-          })
-        }
+      if (radio_player) {
+        audioElement.play()
       }
-
-
-      // volume to 100%
-      videoElement.volume = 1
-      audioElement.volume = 1
     }
+
+    if (message.actions.action === 'off') {
+      let side = message.entities.find((entity) => entity.name === 'side')
+      let tv_display = message.entities.find(
+        (entity) => entity.name === 'object' && entity.value === 'TV'
+      )
+      let light = message.entities.find(
+        (entity) =>
+          (entity.name === 'object' && entity.value === 'lights') || entity.value === 'light'
+      )
+      let radio_player = message.entities.find(
+        (entity) => entity.name === 'object' && entity.value === 'radio'
+      )
+
+      if (light) {
+        if (side && side.value === 'right') {
+          rightSide.forEach((light) => {
+            lights.find((l) => l.name === light).intensity = 0
+          })
+          return
+        }
+
+        if (side && side.value === 'left') {
+          leftSide.forEach((light) => {
+            lights.find((l) => l.name === light).intensity = 0
+          })
+          return
+        }
+
+        lights.forEach((light) => {
+          light.intensity = 0
+        })
+        ambientLight.intensity = 0
+      }
+
+      if (tv_display) {
+        tvDisplay.material = new MeshStandardMaterial({
+          color: tv.material.color,
+          emissive: tv.material.emissive,
+          emissiveIntensity: tv.material.emissiveIntensity,
+          roughness: tv.material.roughness,
+          metalness: tv.material.metalness,
+        })
+        videoElement.pause()
+      }
+
+      if (radio_player) {
+        audioElement.pause()
+      }
+    }
+
+    if (message.actions.action === 'open') {
+      // if not "door" on entities [{name: object, value: "door"}] then open the door
+      let door = message.entities.find(
+        (entity) => entity.name === 'object' && entity.value === 'door'
+      )
+      let blind = message.entities.find(
+        (entity) => entity.name === 'object' && entity.value === 'blind' || entity.value === 'blinds'
+      )
+      let object = []
+
+      if (door) {
+        object = [animations.open_door]
+        doorOpen = true
+      }
+
+      if (blind) {
+        object = [animations.open_blind_1, animations.open_blind_2]
+        blindOpen = true
+      }
+
+      if (object) {
+        object.map((clip) => {
+          const player = mixer.clipAction(clip)
+          player.clampWhenFinished = true
+          player.loop = LoopOnce
+          player.play()
+        })
+      }
+    }
+
+
+    if (message.actions.action === 'close') {
+      // if not "door" on entities [{name: object, value: "door"}] then close the door
+      let door = message.entities.find(
+        (entity) => entity.name === 'object' && entity.value === 'door'
+      )
+      let blind = message.entities.find(
+        (entity) => entity.name === 'object' && entity.value === 'blind' || entity.value === 'blinds'
+      )
+      let object = []
+
+      if (door) {
+        // animation only plays when door is open
+        if (!doorOpen) return
+        mixer.stopAllAction()
+        object = [animations.close_door]
+      }
+
+      if (blind) {
+        if (!blindOpen) return
+        mixer.stopAllAction()
+        object = [animations.close_blind_1, animations.close_blind_2]
+      }
+
+      if (object) {
+        object.map((clip) => {
+          const player = mixer.clipAction(clip)
+          player.clampWhenFinished = true
+          player.loop = LoopOnce
+          player.play()
+        })
+      }
+    }
+
+
+    // volume to 100%
+    videoElement.volume = 1
+    audioElement.volume = 1
   })
 
   // add lights to controls
